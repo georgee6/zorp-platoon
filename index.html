@@ -1,32 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Slot Machine</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zorp Slot Machine</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Casino Slot Machine</h1>
+<div id="background"></div>
 
-    <!-- Balance and Wager -->
-    <div id="balance">Balance: 100</div>
-    <div>
-        Wager: <input type="number" id="wager" value="10" min="1">
-        <button id="spinButton">SPIN</button>
+<div id="container">
+    <div id="keyLeft" class="symbol-key"></div>
+    <div id="mainContent">
+        <div id="reelsContainer"></div>
+
+        <!-- Display spin winnings -->
+        <div id="spinAmountDisplay"></div>
+
+        <!-- Bonus counters, hidden by default -->
+        <div id="freeSpinsCounter" style="display:none">Free Spins: 0</div>
+        <div id="bonusPointsCounter" style="display:none">Bonus Points: 0</div>
+
+        <div id="controls">
+            <span id="balance">Balance: 100</span>
+            <input type="number" id="wager" value="1" min="1" max="50">
+            <button id="spinButton">SPIN</button>
+        </div>
+
+        <div id="notification"></div>
     </div>
+    <div id="keyRight" class="symbol-key"></div>
+</div>
 
-    <!-- Notifications and win amount -->
-    <div id="notification"></div>
-    <div id="spinAmountDisplay"></div>
-
-    <!-- Bonus counters -->
-    <div id="freeSpinsCounter">Free Spins: 0</div>
-    <div id="bonusPointsCounter">Bonus Points: 0</div>
-
-    <!-- Reels container -->
-    <div id="reelsContainer"></div>
-
-    <!-- Scripts -->
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
