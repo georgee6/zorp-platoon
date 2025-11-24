@@ -1,6 +1,6 @@
 /* Page background */
 body {
-    background: url('./background.png') no-repeat center center fixed;
+    background: url('images/background.png') no-repeat center center fixed;
     background-size: cover;  /* scales the image to cover entire screen */
     margin: 0;
     padding: 0;
@@ -62,3 +62,4 @@ body {
 #freeSpinsCounter, #bonusPointsCounter {
     color: yellow;
 }
+
