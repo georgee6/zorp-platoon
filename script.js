@@ -7,6 +7,13 @@ const spinAmountDisplay = document.getElementById('spinAmountDisplay');
 const freeSpinsCounter = document.getElementById('freeSpinsCounter');
 const bonusPointsCounter = document.getElementById('bonusPointsCounter');
 
+// Set the background image
+document.body.style.backgroundImage = "url('images/background.png')";
+document.body.style.backgroundSize = "cover";       // fill the screen
+document.body.style.backgroundPosition = "center";  // center the image
+document.body.style.backgroundRepeat = "no-repeat"; // no tiling
+document.body.style.backgroundAttachment = "fixed"; // fixed on scroll
+
 let balance = 100;
 let freeSpins = 0;
 let bonusPoints = 0;
