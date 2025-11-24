@@ -7,191 +7,243 @@ const spinAmountDisplay = document.getElementById('spinAmountDisplay');
 const freeSpinsCounter = document.getElementById('freeSpinsCounter');
 const bonusPointsCounter = document.getElementById('bonusPointsCounter');
 
-// --- AUDIO FILES ---
-const sounds = {
-    "10": new Audio("10.wav"),
-    "jack": new Audio("jack.wav"),
-    "queen": new Audio("queen.wav"),
-    "king": new Audio("king.wav"),
-    "ace": new Audio("ace.wav"),
-    "wild": new Audio("hulagirl.wav"),
-    "bonus": new Audio("bonus.wav"),
-    "phony": new Audio("badfeeling.wav")
-};
-
-// --- GLOBAL GAME STATE ---
-let balance = 1000;
+let balance = 100;
 let freeSpins = 0;
 let bonusPoints = 0;
-let forcedWinCounter = 0; // forces 1 in 3 win
+let inBonus = false;
+const reelCount = 3;
+const rowCount = 3;
 
-// --- SYMBOL LIST WITH WEIGHTS (controls win rate) ---
-const symbols = [
-    { name: "10", weight: 20 },
-    { name: "jack", weight: 18 },
-    { name: "queen", weight: 16 },
-    { name: "king", weight: 14 },
-    { name: "ace", weight: 12 },
-    { name: "wild", weight:  8 },
-    { name: "bonus", weight:  5 }
-];
-// Total weight = 93
+// Symbols, payouts, sounds, and custom messages
+const images = ['./10.png','./jack.png','./queen.png','./king.png','./ace.png','./bonus.png','./wild.png'];
 
-// Calculates weighted symbol
-function getWeightedSymbol() {
-    let totalWeight = symbols.reduce((sum, s) => sum + s.weight, 0);
-    let random = Math.random() * totalWeight;
+const symbolPay = {
+    './10.png':1,
+    './jack.png':2,
+    './queen.png':3,
+    './king.png':5,
+    './ace.png':20,
+    './bonus.png':3,
+    './wild.png':0
+};
 
-    for (let s of symbols) {
-        if (random < s.weight) return s.name;
-        random -= s.weight;
+const symbolSounds = {
+    './10.png': new Audio('./10.wav'),
+    './jack.png': new Audio('./jack.wav'),
+    './queen.png': new Audio('./queen.wav'),
+    './king.png': new Audio('./king.wav'),
+    './ace.png': new Audio('./ace.wav'),
+    './bonus.png': new Audio('./bonus.wav'),
+    './wild.png': new Audio('./badfeeling.wav')
+};
+
+const symbolMessages = {
+    './10.png': 'COME ON!',
+    './jack.png': 'TIME TO KILL!',
+    './queen.png': 'I got your back.',
+    './king.png': 'I love you!',
+    './ace.png': 'I got a bad feeling',
+    './bonus.png': 'sector 9',
+    './wild.png': 'AUUUUHHH'
+};
+
+const reels = [];
+const currentSymbols = Array.from({length: rowCount},()=>Array(reelCount).fill(null));
+
+// Initialize reels
+for(let r=0;r<rowCount;r++){
+    for(let c=0;c<reelCount;c++){
+        const div=document.createElement('div');
+        div.classList.add('reel');
+
+        const img = images[Math.floor(Math.random()*images.length)];
+        div.style.backgroundImage=`url(${img})`;
+        div.dataset.symbol=img;
+
+        reelsContainer.appendChild(div);
+        reels.push(div);
+        currentSymbols[r][c]=img;
     }
-    return "10";
 }
 
-// Fill screen with wilds (1 in 25 chance)
-function isFullWildScreen() {
-    return Math.random() < 1 / 25;
-}
+// Spin sound
+const spinSound = new Audio('./hulagirl.wav');
+spinSound.loop = true;
+let songPausedTime = 0;
+const spinDurationPerReel = 4000;
 
-// Play symbol-specific audio
-function playSymbolSound(symbol) {
-    if (sounds[symbol]) {
-        sounds[symbol].currentTime = 0;
-        sounds[symbol].play();
+// Update bonus counters
+function updateCounters(){
+    if(inBonus){
+        freeSpinsCounter.style.display='block';
+        bonusPointsCounter.style.display='block';
+        freeSpinsCounter.textContent=`Free Spins: ${freeSpins}`;
+        bonusPointsCounter.textContent=`Bonus Points: ${bonusPoints}`;
+    } else {
+        freeSpinsCounter.style.display='none';
+        bonusPointsCounter.style.display='none';
     }
 }
 
-// Generate reel results
-function spinReels() {
-    if (isFullWildScreen()) {
-        return [
-            ["wild", "wild", "wild"],
-            ["wild", "wild", "wild"],
-            ["wild", "wild", "wild"]
-        ];
+// Spin function
+function spin(){
+    const wager=parseInt(wagerInput.value);
+
+    if(balance<wager && freeSpins===0){
+        notificationLabel.textContent='Not enough credits!';
+        return;
     }
 
-    let reels = [];
-    for (let col = 0; col < 3; col++) {
-        let column = [];
-        for (let row = 0; row < 3; row++) {
-            column.push(getWeightedSymbol());
+    if(freeSpins>0 && !inBonus){
+        inBonus=true;
+        bonusPoints=0;
+        updateCounters();
+    }
+
+    spinButton.disabled=true;
+    balance -= freeSpins>0 ? 0 : wager;
+
+    balanceLabel.textContent=`Balance: ${balance}`;
+    notificationLabel.textContent='';
+    spinAmountDisplay.textContent='';
+
+    spinSound.currentTime = songPausedTime;
+    spinSound.play();
+
+    let boosted = freeSpins>0;
+    let finalSymbols = [];
+
+    // Guaranteed win row
+    const winningSymbol = images[Math.floor(Math.random()*images.length)];
+    const winRow = Math.floor(Math.random()*rowCount);
+
+    for(let r=0;r<rowCount;r++){
+        for(let c=0;c<reelCount;c++){
+            finalSymbols[r*reelCount+c] =
+                (r === winRow) ? winningSymbol : images[Math.floor(Math.random()*images.length)];
         }
-        reels.push(column);
     }
-    return reels;
+
+    // Reel animation
+    for(let c=0;c<reelCount;c++){
+        setTimeout(()=>{
+            const start = Date.now();
+
+            function animateReel(){
+                const elapsed = Date.now()-start;
+
+                if(elapsed < spinDurationPerReel){
+                    for(let r=0;r<rowCount;r++){
+                        const idx = r*reelCount+c;
+                        reels[idx].style.backgroundImage=`url(${images[Math.floor(Math.random()*images.length)]})`;
+                        reels[idx].style.transform=`translateY(${Math.random()*20-10}px)`;
+                        reels[idx].style.border='2px solid white';
+                    }
+                    requestAnimationFrame(animateReel);
+                } else {
+                    for(let r=0;r<rowCount;r++){
+                        const idx=r*reelCount+c;
+                        const sym=finalSymbols[idx];
+
+                        currentSymbols[r][c]=sym;
+                        reels[idx].style.backgroundImage=`url(${sym})`;
+                        reels[idx].dataset.symbol=sym;
+                        reels[idx].style.border='2px solid white';
+                    }
+
+                    if(c===reelCount-1){
+                        const winAmount = checkWin(boosted);
+                        freeSpins = Math.max(0, freeSpins-1);
+                        spinButton.disabled=false;
+
+                        songPausedTime = spinSound.currentTime;
+                        spinSound.pause();
+
+                        updateCounters();
+
+                        if(freeSpins===0 && inBonus){
+                            inBonus=false;
+                            updateCounters();
+                        }
+                    }
+                }
+            }
+            animateReel();
+        },c*200);
+    }
 }
 
-// Check win (any row match)
-function checkWin(reels) {
-    for (let row = 0; row < 3; row++) {
-        if (reels[0][row] === reels[1][row] && reels[1][row] === reels[2][row]) {
-            return reels[0][row];
+// Win checker
+function checkWin(boosted=false){
+    const wager=parseInt(wagerInput.value);
+    let messages=[];
+    let winAmount=0;
+
+    for(let r=0;r<rowCount;r++){
+        const row = reels.slice(r*reelCount,(r+1)*reelCount);
+        const sym = row[0].dataset.symbol;
+
+        if(row.every(d=>d.dataset.symbol===sym)){
+            const rowWin = symbolPay[sym] * wager;
+            winAmount += rowWin;
+
+            row.forEach(d=>d.style.border='3px solid red');
+
+            messages.push(`${symbolMessages[sym]} (Row ${r+1} wins ${rowWin})`);
+
+            symbolSounds[sym].currentTime=0;
+            symbolSounds[sym].play();
+
+            if(inBonus) bonusPoints += rowWin;
         }
     }
-    return null;
+
+    // Diagonal TL-BR
+    const diag1=[reels[0],reels[4],reels[8]];
+    const sym1=diag1[0].dataset.symbol;
+
+    if(diag1.every(d=>d.dataset.symbol===sym1)){
+        const diagWin=symbolPay[sym1]*wager;
+        winAmount+=diagWin;
+
+        diag1.forEach(d=>d.style.border='3px solid red');
+        messages.push(`${symbolMessages[sym1]} (Diagonal TL-BR wins ${diagWin})`);
+
+        symbolSounds[sym1].currentTime=0;
+        symbolSounds[sym1].play();
+
+        if(inBonus) bonusPoints+=diagWin;
+    }
+
+    // Diagonal BL-TR
+    const diag2=[reels[6],reels[4],reels[2]];
+    const sym2=diag2[0].dataset.symbol;
+
+    if(diag2.every(d=>d.dataset.symbol===sym2)){
+        const diagWin=symbolPay[sym2]*wager;
+        winAmount+=diagWin;
+
+        diag2.forEach(d=>d.style.border='3px solid red');
+        messages.push(`${symbolMessages[sym2]} (Diagonal BL-TR wins ${diagWin})`);
+
+        symbolSounds[sym2].currentTime=0;
+        symbolSounds[sym2].play();
+
+        if(inBonus) bonusPoints+=diagWin;
+    }
+
+    balance += winAmount;
+
+    balanceLabel.textContent=`Balance: ${balance}`;
+    notificationLabel.textContent =
+        messages.length ? messages.join(' | ') : 'No win this spin.';
+    spinAmountDisplay.textContent =
+        winAmount ? `Won: ${winAmount}` : '';
+
+    if(inBonus) updateCounters();
+
+    return winAmount;
 }
 
-// Check real bonus
-function checkBonus(reels) {
-    let count = reels.flat().filter(s => s === "bonus").length;
-    return count >= 3;
-}
-
-// Force 1 win every 3 spins
-function forceWinIfNecessary(result) {
-    forcedWinCounter++;
-
-    if (forcedWinCounter >= 3 && !result.winSymbol) {
-        forcedWinCounter = 0;
-        result.winSymbol = "10"; // weakest symbol
-        result.forced = true;
-
-        result.reels = [
-            ["10", "jack", "king"],
-            ["10", "queen", "ace"],
-            ["10", "wild", "bonus"]
-        ];
-    }
-
-    return result;
-}
-
-// Handle phony bonus (fake bonus that doesn't give free spins)
-function maybePhonyBonus() {
-    // 10% chance for fake bonus
-    return Math.random() < 0.10;
-}
-
-// MAIN SPIN FUNCTION
-spinButton.addEventListener('click', () => {
-    let wager = parseInt(wagerInput.value) || 1;
-
-    if (wager > balance) {
-        notificationLabel.textContent = "Not enough balance!";
-        return;
-    }
-
-    balance -= wager;
-    balanceLabel.textContent = balance;
-
-    let reels = spinReels();
-    let winSymbol = checkWin(reels);
-    let isBonus = checkBonus(reels);
-
-    let result = { reels, winSymbol };
-
-    // Apply forced win if needed
-    result = forceWinIfNecessary(result);
-    reels = result.reels;
-    winSymbol = result.winSymbol;
-
-    // Render reels
-    reelsContainer.innerHTML = "";
-    reels.forEach(col => {
-        let columnDiv = document.createElement("div");
-        columnDiv.classList.add("reel-column");
-
-        col.forEach(symbol => {
-            let img = document.createElement("img");
-            img.src = `${symbol}.png`;
-            img.classList.add("symbol");
-            columnDiv.appendChild(img);
-        });
-
-        reelsContainer.appendChild(columnDiv);
-    });
-
-    // Handle REAL BONUS
-    if (isBonus) {
-        playSymbolSound("bonus");
-        freeSpins += 10;
-        freeSpinsCounter.textContent = `Free Spins: ${freeSpins}`;
-        notificationLabel.textContent = "REAL BONUS TRIGGERED! +10 FREE SPINS!";
-        return;
-    }
-
-    // Handle PHONY BONUS (if no real bonus)
-    if (!isBonus && maybePhonyBonus()) {
-        playSymbolSound("phony");
-        notificationLabel.textContent = "You *almost* got the bonus... (phony bonus)";
-        balance += Math.floor(wager * 0.5); // small payout
-        balanceLabel.textContent = balance;
-        return;
-    }
-
-    // Handle REGULAR WIN
-    if (winSymbol) {
-        playSymbolSound(winSymbol);
-        let winAmount = wager * 4;
-        balance += winAmount;
-        balanceLabel.textContent = balance;
-
-        notificationLabel.textContent = `You won ${winAmount}!`;
-        return;
-    }
-
-    // No win
-    notificationLabel.textContent = "No win this spin.";
-});
+spinButton.addEventListener('click', spin);
+updateCounters();
