@@ -1,143 +1,55 @@
-/* General page layout */
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: "Cooper Black", sans-serif;
-    color: white;
-    overflow-x: hidden;
-}
-
-/* Background image */
-#background {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('images/background.png') no-repeat center center;
-    background-size: cover;
-    z-index: -1;
-}
-
-/* Container for reels and controls */
-#container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 20px;
-    padding: 10px;
-    width: 30%; /* 30% of screen width */
-    margin: 0 auto;
-}
-
-/* Main content including reels and controls */
-#mainContent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-/* Reels grid */
+/* Container for all reels */
 #reelsContainer {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 5px;
-    justify-content: center;
-    align-content: center;
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-/* Individual reel cells */
-.reel {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1/1; /* keeps each cell square */
-    border-radius: 10px;
-    border: 2px solid white;
-    background-size: contain; /* scale image to fit */
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: none;
-}
-
-/* Controls layout */
-#controls {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
+    grid-template-columns: repeat(3, 100px); /* 3 reels */
+    grid-template-rows: repeat(3, 100px);    /* 3 rows */
     gap: 10px;
+    justify-content: center;  /* centers the whole grid horizontally */
+    align-items: center;      /* centers the grid vertically if needed */
+    margin: 20px auto;        /* centers the container itself */
+}
+
+/* Each reel */
+.reel {
+    width: 100px;
+    height: 100px;
+    background-size: cover;   /* scale image to fit the div */
+    background-position: center;
+    border: 2px solid white;
+    border-radius: 8px;
+    box-shadow: 0 0 5px #000;
+    transition: transform 0.2s;
 }
 
 /* Spin button */
 #spinButton {
-    font-size: 2em;
-    background-color: green;
-    color: white;
-    padding: 10px 40px;
-    border: none;
-    border-radius: 10px;
+    display: block;
+    margin: 20px auto;       /* centers button horizontally */
+    padding: 10px 30px;
+    font-size: 18px;
     cursor: pointer;
-    -webkit-text-stroke: 3px black; /* outlined text */
 }
 
 /* Wager input */
 #wager {
-    font-size: 1.2em;
-    width: 60px;
-}
-
-/* Notifications */
-#notification, #spinAmountDisplay, #bonusCounter, #freeSpinsCounter, #bonusPointsCounter {
-    font-size: 2em;
-    font-weight: bold;
-    color: yellow;
-    margin-bottom: 10px;
-    -webkit-text-stroke: 3px black; /* outlined text */
+    display: block;
+    margin: 10px auto;
+    padding: 5px 10px;
+    font-size: 16px;
+    width: 80px;
     text-align: center;
 }
 
-/* Bonus counters */
+/* Labels */
+#balance, #notification, #spinAmountDisplay, #freeSpinsCounter, #bonusPointsCounter {
+    text-align: center;
+    font-family: sans-serif;
+    margin: 5px 0;
+    color: white;
+    font-weight: bold;
+}
+
+/* Optional: different color for bonus counters */
 #freeSpinsCounter, #bonusPointsCounter {
-    color: limegreen;
-}
-
-/* Optional glow effect for reels during bonus */
-.glow-pulse {
-    box-shadow: 0 0 20px gold;
-}
-
-/* Symbol keys (hidden) */
-.symbol-key {
-    display: none;
-}
-
-.symbol-key img {
-    width: 40px;
-    height: 40px;
-    margin-right: 5px;
-}
-
-/* Make reels responsive */
-@media (max-width: 1200px) {
-    #reelsContainer {
-        gap: 3px;
-    }
-    .reel {
-        border-width: 1px;
-    }
-}
-
-@media (max-width: 800px) {
-    #container {
-        width: 95%;
-    }
-    .reel {
-        aspect-ratio: 1/1;
-    }
+    color: yellow;
 }
