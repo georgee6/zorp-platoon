@@ -15,36 +15,25 @@ const reelCount = 3;
 const rowCount = 3;
 
 // Symbols, payouts, sounds, and custom messages
-const images = ['./10.png','./jack.png','./queen.png','./king.png','./ace.png','./bonus.png','./wild.png'];
-
-const symbolPay = {
-    './10.png':1,
-    './jack.png':2,
-    './queen.png':3,
-    './king.png':5,
-    './ace.png':20,
-    './bonus.png':3,
-    './wild.png':0
-};
-
+const images = ['10.png','jack.png','queen.png','king.png','ace.png','bonus.png','wild.png'];
+const symbolPay = {'10.png':1,'jack.png':2,'queen.png':3,'king.png':5,'ace.png':20,'bonus.png':3,'wild.png':0};
 const symbolSounds = {
-    './10.png': new Audio('./10.wav'),
-    './jack.png': new Audio('./jack.wav'),
-    './queen.png': new Audio('./queen.wav'),
-    './king.png': new Audio('./king.wav'),
-    './ace.png': new Audio('./ace.wav'),
-    './bonus.png': new Audio('./bonus.wav'),
-    './wild.png': new Audio('./badfeeling.wav')
+    '10.png': new Audio('10.wav'),
+    'jack.png': new Audio('jack.wav'),
+    'queen.png': new Audio('queen.wav'),
+    'king.png': new Audio('king.wav'),
+    'ace.png': new Audio('ace.wav'),
+    'bonus.png': new Audio('bonus.wav'),
+    'wild.png': new Audio('badfeeling.wav')
 };
-
 const symbolMessages = {
-    './10.png': 'COME ON!',
-    './jack.png': 'TIME TO KILL!',
-    './queen.png': 'I got your back.',
-    './king.png': 'I love you!',
-    './ace.png': 'I got a bad feeling',
-    './bonus.png': 'sector 9',
-    './wild.png': 'AUUUUHHH'
+    '10.png': 'COME ON!',
+    'jack.png': 'TIME TO KILL!',
+    'queen.png': 'I got your back.',
+    'king.png': 'I love you!',
+    'ace.png': 'I got a bad feeling',
+    'bonus.png': 'sector 9',
+    'wild.png': 'AUUUUHHH'
 };
 
 const reels = [];
@@ -55,11 +44,9 @@ for(let r=0;r<rowCount;r++){
     for(let c=0;c<reelCount;c++){
         const div=document.createElement('div');
         div.classList.add('reel');
-
         const img = images[Math.floor(Math.random()*images.length)];
         div.style.backgroundImage=`url(${img})`;
         div.dataset.symbol=img;
-
         reelsContainer.appendChild(div);
         reels.push(div);
         currentSymbols[r][c]=img;
@@ -67,12 +54,12 @@ for(let r=0;r<rowCount;r++){
 }
 
 // Spin sound
-const spinSound = new Audio('./hulagirl.wav');
+const spinSound = new Audio('hulagirl.wav');
 spinSound.loop = true;
 let songPausedTime = 0;
 const spinDurationPerReel = 4000;
 
-// Update bonus counters
+// Update counters for bonus
 function updateCounters(){
     if(inBonus){
         freeSpinsCounter.style.display='block';
@@ -85,10 +72,9 @@ function updateCounters(){
     }
 }
 
-// Spin function
+// Main spin function
 function spin(){
     const wager=parseInt(wagerInput.value);
-
     if(balance<wager && freeSpins===0){
         notificationLabel.textContent='Not enough credits!';
         return;
@@ -102,7 +88,6 @@ function spin(){
 
     spinButton.disabled=true;
     balance -= freeSpins>0 ? 0 : wager;
-
     balanceLabel.textContent=`Balance: ${balance}`;
     notificationLabel.textContent='';
     spinAmountDisplay.textContent='';
@@ -113,26 +98,26 @@ function spin(){
     let boosted = freeSpins>0;
     let finalSymbols = [];
 
-    // Guaranteed win row
+    // Guaranteed win: randomly select a winning row
     const winningSymbol = images[Math.floor(Math.random()*images.length)];
     const winRow = Math.floor(Math.random()*rowCount);
-
     for(let r=0;r<rowCount;r++){
         for(let c=0;c<reelCount;c++){
-            finalSymbols[r*reelCount+c] =
-                (r === winRow) ? winningSymbol : images[Math.floor(Math.random()*images.length)];
+            if(r===winRow){
+                finalSymbols[r*reelCount+c] = winningSymbol;
+            } else {
+                finalSymbols[r*reelCount+c] = images[Math.floor(Math.random()*images.length)];
+            }
         }
     }
 
-    // Reel animation
+    // Animate reels
     for(let c=0;c<reelCount;c++){
         setTimeout(()=>{
             const start = Date.now();
-
             function animateReel(){
                 const elapsed = Date.now()-start;
-
-                if(elapsed < spinDurationPerReel){
+                if(elapsed<spinDurationPerReel){
                     for(let r=0;r<rowCount;r++){
                         const idx = r*reelCount+c;
                         reels[idx].style.backgroundImage=`url(${images[Math.floor(Math.random()*images.length)]})`;
@@ -141,16 +126,15 @@ function spin(){
                     }
                     requestAnimationFrame(animateReel);
                 } else {
+                    // Set final symbols
                     for(let r=0;r<rowCount;r++){
                         const idx=r*reelCount+c;
                         const sym=finalSymbols[idx];
-
                         currentSymbols[r][c]=sym;
                         reels[idx].style.backgroundImage=`url(${sym})`;
                         reels[idx].dataset.symbol=sym;
                         reels[idx].style.border='2px solid white';
                     }
-
                     if(c===reelCount-1){
                         const winAmount = checkWin(boosted);
                         freeSpins = Math.max(0, freeSpins-1);
@@ -160,7 +144,6 @@ function spin(){
                         spinSound.pause();
 
                         updateCounters();
-
                         if(freeSpins===0 && inBonus){
                             inBonus=false;
                             updateCounters();
@@ -173,75 +156,58 @@ function spin(){
     }
 }
 
-// Win checker
 function checkWin(boosted=false){
     const wager=parseInt(wagerInput.value);
     let messages=[];
     let winAmount=0;
 
     for(let r=0;r<rowCount;r++){
-        const row = reels.slice(r*reelCount,(r+1)*reelCount);
-        const sym = row[0].dataset.symbol;
-
+        const row=reels.slice(r*reelCount,(r+1)*reelCount);
+        const sym=row[0].dataset.symbol;
         if(row.every(d=>d.dataset.symbol===sym)){
-            const rowWin = symbolPay[sym] * wager;
+            const rowWin = symbolPay[sym]*wager;
             winAmount += rowWin;
-
             row.forEach(d=>d.style.border='3px solid red');
 
             messages.push(`${symbolMessages[sym]} (Row ${r+1} wins ${rowWin})`);
 
             symbolSounds[sym].currentTime=0;
             symbolSounds[sym].play();
-
             if(inBonus) bonusPoints += rowWin;
         }
     }
 
-    // Diagonal TL-BR
+    // Diagonals
     const diag1=[reels[0],reels[4],reels[8]];
     const sym1=diag1[0].dataset.symbol;
-
     if(diag1.every(d=>d.dataset.symbol===sym1)){
         const diagWin=symbolPay[sym1]*wager;
         winAmount+=diagWin;
-
         diag1.forEach(d=>d.style.border='3px solid red');
         messages.push(`${symbolMessages[sym1]} (Diagonal TL-BR wins ${diagWin})`);
-
         symbolSounds[sym1].currentTime=0;
         symbolSounds[sym1].play();
-
         if(inBonus) bonusPoints+=diagWin;
     }
 
-    // Diagonal BL-TR
     const diag2=[reels[6],reels[4],reels[2]];
     const sym2=diag2[0].dataset.symbol;
-
     if(diag2.every(d=>d.dataset.symbol===sym2)){
         const diagWin=symbolPay[sym2]*wager;
         winAmount+=diagWin;
-
         diag2.forEach(d=>d.style.border='3px solid red');
         messages.push(`${symbolMessages[sym2]} (Diagonal BL-TR wins ${diagWin})`);
-
         symbolSounds[sym2].currentTime=0;
         symbolSounds[sym2].play();
-
         if(inBonus) bonusPoints+=diagWin;
     }
 
     balance += winAmount;
-
     balanceLabel.textContent=`Balance: ${balance}`;
-    notificationLabel.textContent =
-        messages.length ? messages.join(' | ') : 'No win this spin.';
-    spinAmountDisplay.textContent =
-        winAmount ? `Won: ${winAmount}` : '';
+    notificationLabel.textContent=messages.length ? messages.join(' | ') : 'No win this spin.';
+    spinAmountDisplay.textContent=winAmount ? `Won: ${winAmount}` : '';
 
     if(inBonus) updateCounters();
-
     return winAmount;
 }
 
